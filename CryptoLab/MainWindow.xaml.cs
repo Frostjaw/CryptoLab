@@ -18,6 +18,7 @@
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+  
     public partial class MainWindow : Window
     {
         public MainWindow()
@@ -25,13 +26,23 @@
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void Add_Click(object sender, RoutedEventArgs e)
         {
-            string text = textBox1.Text;
-            if (text != "")
-            {
-                MessageBox.Show(text);
-            }
+            Transaction TranWindow = new Transaction();
+            TranWindow.Owner = this;
+
+            TranWindow.Show();
+        }
+
+        public void Update_Ballance(double ball)
+        {
+            double ball_old = Double.Parse(this.BallanceText.Content.ToString());
+            ball_old += ball;
+            this.BallanceText.Content =ball_old.ToString();
+        }
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

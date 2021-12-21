@@ -5,9 +5,41 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CryptoLab"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Width="800" Height="450" 
+        ResizeMode="NoResize">
     <Grid>
-        <TextBox x:Name="textBox1" Width="150" Height="30" VerticalAlignment="Top" Margin="20" />
-        <Button x:Name="button1"  Width="100" Height="30" Content="Кнопка" Click="Button_Click" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="29*"/>
+            <ColumnDefinition Width="11*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="5*"/>
+            <RowDefinition Height="20*"/>
+        </Grid.RowDefinitions>
+        <GroupBox x:Name="TransactionsBox" Header="History transactions" Margin="5,5,5,5" FontSize="15" Grid.Column="0" Grid.RowSpan="2">
+            <StackPanel>
+                <ListView x:Name="TransactionsData" x:FieldModifier="public"  Margin="5px">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="145" Header="Receiver" DisplayMemberBinding="{Binding Path=Receiver}"/>
+                            <GridViewColumn Width="145" Header="Sender" DisplayMemberBinding="{Binding Path=Sender}"/>
+                            <GridViewColumn Width="85" Header="Total" DisplayMemberBinding="{Binding Path=Total}"/>
+                            <GridViewColumn Width="150" Header="Data" DisplayMemberBinding="{Binding Path=Data}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox x:Name="BallanceBox"  Header="Ballance" Margin="5,5,5,5" FontSize="15" Grid.Column="2" Grid.ColumnSpan="2">
+            <StackPanel x:Name="BallancePanel">
+                <Label x:Name="BallanceText" Content="0,0000" Margin="10px"  HorizontalAlignment="Center"  />
+
+            </StackPanel>
+        </GroupBox>
+        <DockPanel Grid.Column="3"  Grid.Row="1" LastChildFill="false" Margin="5,0,5,0" VerticalAlignment="Center" Height="80">
+            <Button x:Name="Close" Content="Exit" Click="Close_Click" DockPanel.Dock="Bottom" Height="30" Margin="5px"/>
+            <Button x:Name="Add" Content="Add Transaction" Click="Add_Click" DockPanel.Dock="Top" Height="30" Margin="5px"/>
+        </DockPanel>
     </Grid>
 </Window>
