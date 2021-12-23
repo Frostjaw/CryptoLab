@@ -31,9 +31,9 @@
             </StackPanel>
         </GroupBox>
 
-        <GroupBox x:Name="BallanceBox"  Header="Ballance" Margin="5,5,5,5" FontSize="15" Grid.Column="2" Grid.ColumnSpan="2">
-            <StackPanel x:Name="BallancePanel">
-                <Label x:Name="BallanceText" Content="0,0000" Margin="10px"  HorizontalAlignment="Center"  />
+        <GroupBox x:Name="BalanceBox"  Header="Balance" Margin="5,5,5,5" FontSize="15" Grid.Column="2" Grid.ColumnSpan="2">
+            <StackPanel x:Name="BalancePanel">
+                <Label x:Name="BalanceText" Content="0,0000" Margin="10px"  HorizontalAlignment="Center"  />
 
             </StackPanel>
         </GroupBox>

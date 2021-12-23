@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CryptoLab": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "NodeId": "1"
+      }
+    }
+  }
+}

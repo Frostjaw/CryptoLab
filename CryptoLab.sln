@@ -3,7 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31702.278
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLab", "CryptoLab\CryptoLab.csproj", "{A2D0B3BE-B1C0-44F4-975D-CE61153908B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoLab", "CryptoLab\CryptoLab.csproj", "{A2D0B3BE-B1C0-44F4-975D-CE61153908B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLab.Core", "CryptoLab.Core\CryptoLab.Core.csproj", "{77634465-28AA-4527-B3E1-2B470B8281A3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{58DA195B-0C5C-41C8-BE69-B1AC4A80E8E9}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +22,10 @@ Global
 		{A2D0B3BE-B1C0-44F4-975D-CE61153908B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2D0B3BE-B1C0-44F4-975D-CE61153908B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2D0B3BE-B1C0-44F4-975D-CE61153908B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77634465-28AA-4527-B3E1-2B470B8281A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77634465-28AA-4527-B3E1-2B470B8281A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77634465-28AA-4527-B3E1-2B470B8281A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77634465-28AA-4527-B3E1-2B470B8281A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
