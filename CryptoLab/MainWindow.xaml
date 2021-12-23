@@ -16,15 +16,15 @@
             <RowDefinition Height="5*"/>
             <RowDefinition Height="20*"/>
         </Grid.RowDefinitions>
-        <GroupBox x:Name="TransactionsBox" Header="History transactions" Margin="5,5,5,5" FontSize="15" Grid.Column="0" Grid.RowSpan="2">
+        <GroupBox x:Name="TransactionsBox" Header="Transaction history" Margin="5,5,5,5" FontSize="15" Grid.Column="0" Grid.RowSpan="2">
             <StackPanel>
                 <ListView x:Name="TransactionsData" x:FieldModifier="public"  Margin="5px">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Width="145" Header="Receiver" DisplayMemberBinding="{Binding Path=Receiver}"/>
                             <GridViewColumn Width="145" Header="Sender" DisplayMemberBinding="{Binding Path=Sender}"/>
-                            <GridViewColumn Width="85" Header="Total" DisplayMemberBinding="{Binding Path=Total}"/>
-                            <GridViewColumn Width="150" Header="Data" DisplayMemberBinding="{Binding Path=Data}"/>
+                            <GridViewColumn Width="145" Header="Recipient" DisplayMemberBinding="{Binding Path=Recipient}"/>
+                            <GridViewColumn Width="85" Header="Amount" DisplayMemberBinding="{Binding Path=Amount}"/>
+                            <GridViewColumn Width="150" Header="Date" DisplayMemberBinding="{Binding Path=Date}"/>
                         </GridView>
                     </ListView.View>
                 </ListView>

@@ -1,9 +1,9 @@
 ﻿namespace CryptoLab
 {
+    using System;
     using System.Windows;
     using System.Windows.Controls;
 
-    //MainWindow Form = Application.Current.Windows[0] as MainWindow;
     public partial class TransactionWindow : Window
     {
         public TransactionWindow()
@@ -13,18 +13,21 @@
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
         {
-            TextBox textBoxRec = textBox1;
-            TextBox textBoxTotal = textBox2;
-            if (textBoxRec.GetLineText(0) != "" & textBoxTotal.GetLineText(0) != "")
-            {
-                AddTransactions(textBoxRec.GetLineText(0), "192.168.0.1", textBoxTotal.GetLineText(0));
-                
-                Close();
-            }
-            else
+            var item = recipientComboBox.SelectedValue as ComboBoxItem;
+            var recipient = item.Content.ToString();
+            var amount = textBox2.Text;
+            if (string.IsNullOrEmpty(recipient) && string.IsNullOrEmpty(amount))
             {
                 MessageBox.Show("Receiver and total empty", "Alert", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                return;
             }
+
+            var currentApp = Application.Current as App;
+            var currentNodeId = currentApp.CurrentNodeId;
+            AddTransaction(currentNodeId, int.Parse(recipient), int.Parse(amount));
+
+            Close();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -32,19 +35,21 @@
             Close();
         }
 
-        private void AddTransactions(string Receiver,string Sender, string total)
+        private void AddTransaction(int senderId, int recipientId, int amount)
         {
-            MainWindow mainWindow = Owner as MainWindow;
-            //mainWindow.UpdateBalance();
-            //mainWindow.TransactionsData.Items.Add(new Transactions { Receiver = Receiver, Sender = Sender, Total = total, Data = DateTime.Now.ToString("HH:mm:ss") });
-        }
-    }
+            var currentApp = Application.Current as App;
+            currentApp.CryptoCore.CreateTransaction(recipientId, amount);
 
-    public class Transactions
-    {
-        public string Receiver { get; set; }
-        public string Sender { get; set; }
-        public string Total { get; set; }
-        public string Data { get; set; }
+            var mainWindow = Owner as MainWindow;
+            _ = mainWindow.TransactionsData.Items.Add(new
+            {
+                Sender = senderId,
+                Recipient = recipientId,
+                Amount = amount,
+                Date = DateTime.Now.ToString("HH:mm:ss")
+            });
+
+            mainWindow.UpdateBalance();
+        }
     }
 }

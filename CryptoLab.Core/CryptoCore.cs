@@ -92,8 +92,10 @@
         }
 
         // TODO call only when there is enough balance on current key (or write validation inside)
-        public void CreateTransaction(string recipientKey, int amount)
+        public void CreateTransaction(int recipientId, int amount)
         {
+            var recipientKey = _nodesInfo.Find(ni => ni.Id == recipientId).RsaKey;
+
             var (transactionToSpend, transactionToSpendOutputIndex) = FindTransactionToSpend(amount);
 
             var newTransaction = new Transaction
