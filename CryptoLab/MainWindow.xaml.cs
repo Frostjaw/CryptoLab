@@ -15,6 +15,7 @@
             var currentApp = Application.Current as App;
             var balance = currentApp.CryptoCore.GetBalance();
             BalanceText.Content = balance.ToString();
+            CurrentNodeIdText.Content = $"Node Id: {currentApp.CurrentNodeId}";
         }
 
         private void Add_Click(object sender, RoutedEventArgs e)
@@ -22,6 +23,11 @@
             TransactionWindow TranWindow = new TransactionWindow();
             TranWindow.Owner = this;
             TranWindow.Show();
+        }
+        
+        private void Refresh_Balance(object sender, RoutedEventArgs e)
+        {
+            UpdateBalance();
         }
 
         public void UpdateBalance()

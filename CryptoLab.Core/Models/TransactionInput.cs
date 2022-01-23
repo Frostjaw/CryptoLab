@@ -1,6 +1,7 @@
 ﻿namespace CryptoLab.Core.Models
 {
     using System;
+    using System.Text;
 
     [Serializable]
     public class TransactionInput
@@ -20,5 +21,15 @@
         /// </summary>
         [field: NonSerialized]
         public string ScriptSignature { get; set; }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder()
+                .AppendLine($"PreviousTransactionHash: {PreviousTransactionHash}")
+                .AppendLine($"PreviousTransactionOutputIndex: {PreviousTransactionOutputIndex}")
+                .AppendLine($"ScriptSignature: {ScriptSignature}");
+
+            return sb.ToString();
+        }
     }
 }

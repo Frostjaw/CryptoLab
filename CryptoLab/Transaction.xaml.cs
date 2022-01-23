@@ -49,7 +49,7 @@
                 Date = DateTime.Now.ToString("HH:mm:ss")
             });
 
-            mainWindow.UpdateBalance();
+            //mainWindow.UpdateBalance();
         }
     }
 }

@@ -1,23 +1,33 @@
 ﻿namespace CryptoLab.Core
 {
     using CryptoLab.Core.Models;
+    using CryptoLab.NetworkModule;
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Security.Cryptography;
+    using System.Text;
+    using System.Threading;
 
     public class CryptoCore
     {
         private const string NodesInfoPath = "nodesInfo.json";
+        private const byte PowDifficulty = 5;
 
         private readonly List<NodeInfo> _nodesInfo;
         private readonly string _currentNodeKeys;
         private readonly DbAccessor _dbAccessor;
 
+        private readonly Host _host;
+
         private List<(Transaction, int)> _myUnspentTransactionOutputs;
         private List<(Transaction, int)> _allUnspentTransactionOutputs;
+
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly CancellationToken _cancellationToken;
 
         public CryptoCore(int nodeId)
         {
@@ -26,12 +36,22 @@
             _currentNodeKeys = _nodesInfo.Find(ni => ni.Id == nodeId).RsaKey;
             _dbAccessor = new DbAccessor();
 
+            _host = new Host(nodeId, _nodesInfo);
+            _host.dataReceived += getDataByHeader;
+            _host.startListeningInThread();
+
             _myUnspentTransactionOutputs = GetMyUnspentTransactionOutputs();
             _allUnspentTransactionOutputs = GetAllUnspentTransactionOutputs();
+
+            _cancellationTokenSource = new CancellationTokenSource();
+            _cancellationToken = _cancellationTokenSource.Token;
         }
 
         public void InitializeBlockChain()
         {
+            // HERE
+            _dbAccessor.ClearDb();
+
             var blocks = _dbAccessor.GetAllBlocks();
             if (blocks.Any())
             {
@@ -135,13 +155,27 @@
             //_myUnspentTransactionOutputs.Remove((transactionToSpend, transactionToSpendOutputIndex));
             //_allUnspentTransactionOutputs.Remove((transactionToSpend, transactionToSpendOutputIndex));
 
-            AddTransactionToPool(newTransaction);
             // TODO send newTransaction to all nodes
+            var transactionJson = JsonConvert.SerializeObject(newTransaction);
+            var deserializedTransaction = JsonConvert.DeserializeObject<Transaction>(transactionJson);
+            var transactionBytes = Encoding.UTF8.GetBytes(transactionJson);
+
+            AddTransactionToPool(newTransaction);
+
+            _host.sendTransaction(transactionBytes);
         }
 
         public void AddTransactionToPool(Transaction transaction)
         {
             if (!IsTransactionValid(transaction))
+            {
+                return;
+            }
+
+            var transactionHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(transaction));
+            var existedTransaction = _dbAccessor.GetTransactionByHash(transactionHash);
+
+            if (existedTransaction != null)
             {
                 return;
             }
@@ -179,18 +213,57 @@
             _dbAccessor.AddTransactionToPool(transaction);
 
             var transactionPool = _dbAccessor.GetTransactionPool();
+            
             // TODO move to const
             if (transactionPool.Count == 3)
             {
                 CreateBlock();
-            }
+            }            
         }
 
         public void AddBlock(Block block)
         {
-            if (!IsBlockValid(block))
+            // refresh local cache
+            foreach (var transaction in block.Transactions)
             {
-                return;
+                var transactionPool = _dbAccessor.GetTransactionPool();
+                if (transactionPool.Contains(transaction))
+                {
+                    transactionPool.Remove(transaction);
+
+                    continue;
+                }
+
+                // HERE new block doesn't delete anything from _myUnspentTransactionOutputs
+                // remove spent outputs from local cache
+                foreach (var input in transaction.Inputs)
+                {
+                    var previousTransaction = _dbAccessor.GetTransactionByHash(input.PreviousTransactionHash);
+                    if (_myUnspentTransactionOutputs.Contains((previousTransaction, input.PreviousTransactionOutputIndex)))
+                    {
+                        _myUnspentTransactionOutputs.Remove((previousTransaction, input.PreviousTransactionOutputIndex));
+                    }
+
+                    if (_allUnspentTransactionOutputs.Contains((previousTransaction, input.PreviousTransactionOutputIndex)))
+                    {
+                        _allUnspentTransactionOutputs.Remove((previousTransaction, input.PreviousTransactionOutputIndex));
+                    }
+                }
+
+/*                // add new unspent outputs to local hash
+                for (var i = 0; i < transaction.Outputs.Length; i++)
+                {
+                    var output = transaction.Outputs[i];
+                    if (output.ScriptPublicKey == _currentNodeKeys)
+                    {
+                        _myUnspentTransactionOutputs.Add((transaction, i));
+                        _allUnspentTransactionOutputs.Add((transaction, i));
+
+                        continue;
+                    }
+
+                    _allUnspentTransactionOutputs.Add((transaction, i));
+                }*/
             }
 
             _dbAccessor.AddBlock(block);
@@ -233,17 +306,60 @@
 
             var newBlock = new Block
             {
-                PreviousBlockHeaderHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(lastBlock)),
+                PreviousBlockHeaderHash = lastBlock.GetHeaderHash(),
                 TransactionsHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(transactionPool)),
-                // TODO POF
                 ProofOfWorkCounter = 0,
                 Transactions = transactionPool.ToArray(),
             };
 
+            // POW
+            var isPowCalculated = CalculatePow(newBlock);
+            if (!isPowCalculated)
+            {
+                return;
+            }
+
             _dbAccessor.AddBlock(newBlock);
+
+            // refresh local cache
+            foreach (var trx in transactionPool)
+            {
+                // remove spent outputs from local cache
+                foreach (var input in trx.Inputs)
+                {
+                    var previousTransaction = _dbAccessor.GetTransactionByHash(input.PreviousTransactionHash);
+                    if (_myUnspentTransactionOutputs.Contains((previousTransaction, input.PreviousTransactionOutputIndex)))
+                    {
+                        _myUnspentTransactionOutputs.Remove((previousTransaction, input.PreviousTransactionOutputIndex));
+                    }
+
+                    if (_allUnspentTransactionOutputs.Contains((previousTransaction, input.PreviousTransactionOutputIndex)))
+                    {
+                        _allUnspentTransactionOutputs.Remove((previousTransaction, input.PreviousTransactionOutputIndex));
+                    }
+                }
+            }
+
             _dbAccessor.ClearTransactionPool();
 
-            // TODO send block
+            // TODO send block to all nodes
+            var blockJson = JsonConvert.SerializeObject(newBlock);
+            var blockBytes = Encoding.UTF8.GetBytes(blockJson);
+            _host.sendBlock(blockBytes);
+        }
+
+        private bool CalculatePow(Block block)
+        {
+            var pow = new ProofOfWork(SHA256.Create(), PowDifficulty, block.GetHeaderHash());
+            var isPowSolutionFound = pow.FindSolution(_cancellationToken);
+            if (!isPowSolutionFound)
+            {
+                return false;
+            }
+
+            block.ProofOfWorkCounter = BitConverter.ToInt32(pow.Solution);
+
+            return true;
         }
 
         private bool IsBlockValid(Block block)
@@ -255,18 +371,33 @@
                 return false;
             }
 
-            // TODO POF
+            // POW
+            var pow = new ProofOfWork(SHA256.Create(), PowDifficulty, block.GetHeaderHash());
+            var isPowSolutionValid = pow.VerifySolution(BitConverter.GetBytes(block.ProofOfWorkCounter));
+
+            if (!isPowSolutionValid)
+            {
+                return false;
+            }
 
             // check transactions
             foreach (var transaction in block.Transactions)
             {
-                // TODO refresh local transaction pool hash 
+                var transactionHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(transaction));
+                var trn = _dbAccessor.GetTransactionByHash(transactionHash);
+
+                // Validate when current node doesn't have this transaction already
+                if (trn != null)
+                {
+                    continue;
+                }
 
                 if (!IsTransactionValid(transaction))
                 {
                     return false;
                 }
 
+                // TODO refresh local transaction pool hash 
                 // remove spent outputs from local hash
                 foreach (var input in transaction.Inputs)
                 {
@@ -495,6 +626,69 @@
             }
 
             return (transactionToSpend, transactionToSpendOutputIndex);
+        }
+
+        public void getDataByHeader(MessageHeader header, byte[] data)
+        {
+            switch (header)
+            {
+                case MessageHeader.Transaction:
+                    {
+                        var receivedJson = Encoding.UTF8.GetString(data);
+                        var receivedTransaction = JsonConvert.DeserializeObject<Transaction>(receivedJson);
+                        Trace.WriteLine($"Transaction received:\n{receivedTransaction}");
+
+                        if (!IsTransactionValid(receivedTransaction))
+                        {
+                            Trace.WriteLine("Transaction not valid");
+                        }
+
+                        AddTransactionToPool(receivedTransaction);
+                        Trace.WriteLine("Transaction added to pool");
+
+                        break;
+                    }
+                case MessageHeader.Block:
+                    {
+                        var receivedJson = Encoding.UTF8.GetString(data);
+                        var receivedBlock = JsonConvert.DeserializeObject<Block>(receivedJson);
+                        Trace.WriteLine($"Block received:\n{receivedBlock}");
+
+                        if (!IsBlockValid(receivedBlock))
+                        {
+                            Trace.WriteLine("Block not valid");
+                        }
+
+                        var existedBlock = _dbAccessor.GetBlockByHash(receivedBlock.GetHeaderHash());
+                        if (existedBlock != null)
+                        {
+                            break;
+                        }
+
+                        var transactionPool = _dbAccessor.GetTransactionPool();
+                        foreach(var transaction in receivedBlock.Transactions)
+                        {
+                            if (transactionPool.Contains(transaction))
+                            {
+                                _cancellationTokenSource.Cancel();
+                                break;
+                            }
+                        }
+
+                        AddBlock(receivedBlock);
+                        Trace.WriteLine("Block added to blockchain");
+
+                        break;
+                    }
+                case MessageHeader.Unknown:
+                    {
+                        // TODO: 
+                        // Unknow header!
+                        Trace.WriteLine("UNKNOWN:");
+                        Trace.WriteLine(Encoding.UTF8.GetString(data));
+                        break;
+                    }
+            }
         }
     }
 }

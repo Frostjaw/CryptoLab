@@ -37,9 +37,11 @@
 
             </StackPanel>
         </GroupBox>
-        <DockPanel Grid.Column="3"  Grid.Row="1" LastChildFill="false" Margin="5,0,5,0" VerticalAlignment="Center" Height="80">
+        <DockPanel Grid.Column="3"  Grid.Row="1" LastChildFill="false" Margin="5,0,5,0" VerticalAlignment="Center" Height="120">
             <Button x:Name="Close" Content="Exit" Click="Close_Click" DockPanel.Dock="Bottom" Height="30" Margin="5px"/>
             <Button x:Name="Add" Content="Add Transaction" Click="Add_Click" DockPanel.Dock="Top" Height="30" Margin="5px"/>
+            <Button x:Name="RefreshBalance" Content="Refresh Balance" Click="Refresh_Balance" DockPanel.Dock="Top" Height="30" Margin="5px"/>
         </DockPanel>
+        <Label x:Name="CurrentNodeIdText" Grid.Column="1" Content="Node Id = " HorizontalAlignment="Left" Margin="125,10,0,0" Grid.Row="1" VerticalAlignment="Top"/>
     </Grid>
 </Window>

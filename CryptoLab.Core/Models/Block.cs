@@ -3,6 +3,7 @@
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
+    using System.Text;
 
     [Serializable]
     public class Block : IEquatable<Block>
@@ -61,6 +62,22 @@
             var comparableHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(block));
 
             return thisHash.SequenceEqual(comparableHash);
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder()
+                .AppendLine($"PreviousBlockHeaderHash: {PreviousBlockHeaderHash}")
+                .AppendLine($"TransactionsHash: {TransactionsHash}")
+                .AppendLine($"ProofOfWorkCounter: {ProofOfWorkCounter}");
+
+            foreach (var transaction in Transactions)
+            {
+                sb.AppendLine("Transactions:");
+                sb.Append(transaction.ToString());
+            }
+
+            return sb.ToString();
         }
     }
 }

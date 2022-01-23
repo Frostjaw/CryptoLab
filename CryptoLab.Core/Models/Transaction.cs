@@ -3,6 +3,7 @@
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
+    using System.Text;
 
     [Serializable]
     public class Transaction : IEquatable<Transaction>
@@ -43,6 +44,25 @@
             var comparableHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(transaction));
 
             return thisHash.SequenceEqual(comparableHash);
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+
+            foreach (var input in Inputs)
+            {
+                sb.AppendLine("Inputs:");
+                sb.Append(input.ToString());
+            }
+
+            foreach (var output in Outputs)
+            {
+                sb.AppendLine("Outputs:");
+                sb.Append(output.ToString());
+            }
+
+            return sb.ToString();
         }
     }
 }

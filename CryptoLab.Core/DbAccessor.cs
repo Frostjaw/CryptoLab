@@ -111,7 +111,8 @@
 
             foreach (var block in blocks)
             {
-                var currentBlockHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(block));
+                //var currentBlockHash = Utils.ComputeSha256Hash(Utils.ObjectToByteArray(block));
+                var currentBlockHash = block.GetHeaderHash();
 
                 if (currentBlockHash.SequenceEqual(hash))
                 {
