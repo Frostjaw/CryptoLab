@@ -609,7 +609,7 @@
                 {
                     var output = unSpentTransactionOutput.Item1.Outputs[i];
                     if (output.ScriptPublicKey == _currentNodeKeys &&
-                            output.Value > amount)
+                            output.Value >= amount)
                     {
                         transactionToSpend = unSpentTransactionOutput.Item1;
                         transactionToSpendOutputIndex = i;
@@ -641,6 +641,7 @@
                         if (!IsTransactionValid(receivedTransaction))
                         {
                             Trace.WriteLine("Transaction not valid");
+                            break;
                         }
 
                         AddTransactionToPool(receivedTransaction);
@@ -657,6 +658,7 @@
                         if (!IsBlockValid(receivedBlock))
                         {
                             Trace.WriteLine("Block not valid");
+                            break;
                         }
 
                         var existedBlock = _dbAccessor.GetBlockByHash(receivedBlock.GetHeaderHash());
